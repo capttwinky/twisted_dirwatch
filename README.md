@@ -15,15 +15,18 @@ README.md: this file
 
 To Use
 ======
-1) import the module
+1. import the module
+
     import dir_watch
-2) create a watcher for a directory
+    
+2. create a watcher for a directory
+
     my_notify = Dir_Watcher("/tmp/filewatch")
 
-3) register one or more callback functions
-    a) declare a function that takes the event string and twisted FilePath
-    b) use tw_simple_proc for parallel processing of events
-    c) can also use Queue.Queue, etc.
+3. register one or more callback functions
+    a. declare a function that takes the event string and twisted FilePath
+    b. use tw_simple_proc for parallel processing of events
+    c. can also use Queue.Queue, etc.
 
     def callbackfn(event, filepath):
         print filepath
@@ -31,9 +34,11 @@ To Use
     my_notify.callbacks['create'] = callbackfn
 
 4) turn on the listeners for the scripted events
+    
     my_notify.events = ['create']
 
 5) run your reactor
+    
     reactor.run()
 
 6) enjoy with family and friends.
