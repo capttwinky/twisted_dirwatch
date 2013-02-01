@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 
-from twisted.internet import inotify, reactor
+from twisted.internet import inotify
 from twisted.python import filepath
 
 import tw_simple_proc as tsp
@@ -23,7 +23,8 @@ class Dir_Watcher(object):
         self.watcher.watch(filepath.FilePath(dirpath), callbacks=[self.notify])
         self.watcher.startReading()
         #~ self.callback_fns['all'] = False
-        self.name_regex = re.complie(name_match) if name_match else None
+        self.name_regex = re.compile(name_match) if name_match else None
+        self.events = events
         self.callbacks = {
             'create': create_handler,
             'delete': delete_handler,
@@ -60,28 +61,32 @@ def all_callback(event_name, file_path):
 
 
 
-#### test functions below here
+#### exapmle functions below here
+def my_examples():
+    from twisted.internet import reactor
+    import functools
+    import sys
+    from pprint import pprint
 
-import functools
-from pprint import pprint
+    def print_event(str_event, filepath):
+        '''uses a dummy script to emulate sending to another process'''
+        strme = "{0} - {1}".format(str_event, filepath.path)
+        md = tsp.make_def(reactor, 0, sys.executable,'./cmdline.py', strme)
+        md.addCallback(pprint)
 
-def print_event(str_event, filepath):
-    '''uses a dummy script to emulate sending to another process'''
-    strme = "{0} - {1}".format(str_event, filepath.path)
-    md = tsp.make_def(reactor, 0, '/usr/bin/python','./cmdline.py', strme)
-    md.addCallback(pprint)
+    ## create a watcher for a directory
+    my_notify = Dir_Watcher("/tmp/filewatch")
 
+    ## register one or more callback functions - can be put on queues from here as well
+    my_notify.callbacks['create'] = functools.partial(print_event,'c')
+    my_notify.callbacks['modify'] = functools.partial(print_event,'m')
+    my_notify.callbacks['delete'] = functools.partial(print_event,'d')
+    my_notify.callbacks['attrib'] = functools.partial(print_event,'a')
 
-## create a watcher for a directory
-my_notify = Dir_Watcher("/tmp/filewatch")
+    ## turn on the listeners for the scripted events
+    my_notify.events = ['create','modify','delete','attrib']
 
-## register one or more callback functions - can be put on queues from here as well
-my_notify.callbacks['create'] = functools.partial(print_event,'c')
-my_notify.callbacks['modify'] = functools.partial(print_event,'m')
-my_notify.callbacks['delete'] = functools.partial(print_event,'d')
-my_notify.callbacks['attrib'] = functools.partial(print_event,'a')
-
-## turn on the listeners for the scripted events
-my_notify.events = ['create','modify','delete','attrib']
-
-reactor.run()
+    reactor.run()
+    
+if __name__ == '__main__':
+    my_examples()
