@@ -37,6 +37,8 @@ class fileSystemTester(object):
         ml = yield getattr(self, ncmd)()
         if len(self.cmds) > 0:
             self.do_cmds()
+        else:
+            reactor.stop()
 
 def doFileops(binexe, fnames):
     for i, fname in enumerate(fnames):
@@ -45,16 +47,25 @@ def doFileops(binexe, fnames):
 class DirWatchTest(unittest.TestCase):
     NUMFILES = 50
     def setUp(self):
+        self.tdir = "/tmp/filewatch"
         self.fsevents = []
-        self.mnotify = Dir_Watcher(".")
-        self.mnotify.callbacks['all'] = lambda a,b: self.fsevents.append((a,b))
-        self.mnotify.events=['all']
-        self.tfile = fileSystemTester('.',self.NUMFILES)
+        self.mnotify = Dir_Watcher(self.tdir)
+        self.mnotify.callbacks['all'] = self.cbfn
+        self.mnotify.callbacks['create'] = partial(self.cbfn,'c')
+        self.mnotify.callbacks['attrib'] = partial(self.cbfn,'a')
+        self.mnotify.callbacks['delete'] = partial(self.cbfn,'d')
+        
+        self.mnotify.events=['all','create','attrib','delete']
+        self.tfile = fileSystemTester(self.tdir,self.NUMFILES)
     
     def tearDown(self):
         self.mnotify.watcher.loseConnection()
         self.tfile= None
         unittest.TestCase.tearDown(self)
+    
+    def cbfn(self, event, fpath):
+        self.fsevents.append((event,fpath))
+        
         
     def verify_events(self,ver_events):
         observed = [(f[1].basename().strip('.testtouch'),f[0]) for f in self.fsevents]
@@ -71,4 +82,7 @@ class DirWatchTest(unittest.TestCase):
     def test_file_create_remove(self):
         self.tfile.cmds=['run_touch','run_rm']
         smt = yield self.tfile.do_cmds()
-        self.verify_events(['create','attrib'])
+        #~ import pdb; pdb.set_trace()
+        self.verify_events(['create','attrib','c','a'])
+        #~ self.verify_events(['delete','d'])
+        

@@ -43,6 +43,7 @@ class Dir_Watcher(object):
        if self.name_regex and not self.name_regex.match(filepath.basename):
            return None
        str_event = inotify.humanReadableMask(mask)[0]
+       #~ print str_event, filepath
        if str_event in self.events:
            self.callbacks.get(str_event)(filepath)
        if 'all' in self.events:
