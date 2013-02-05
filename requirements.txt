@@ -1,0 +1,4 @@
+Twisted==12.3.0
+dir-watch==0.1
+wsgiref==0.1.2
+zope.interface==4.0.3

@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# jmcgrady@twitter.com
+#
+# test_dir_watch.py
+# REFS: JIRA HWENG-
+# REPO: http://cgit.twitter.biz/tw_file_depot
 
 from twisted.internet import reactor
 from twisted.internet import task
@@ -46,28 +54,36 @@ def doFileops(binexe, fnames):
 
 class DirWatchTest(unittest.TestCase):
     NUMFILES = 50
-    def setUp(self):
-        self.tdir = "/tmp/filewatch"
-        self.fsevents = []
-        self.mnotify = Dir_Watcher(self.tdir)
-        self.mnotify.callbacks['all'] = self.cbfn
-        self.mnotify.callbacks['create'] = partial(self.cbfn,'c')
-        self.mnotify.callbacks['attrib'] = partial(self.cbfn,'a')
-        self.mnotify.callbacks['delete'] = partial(self.cbfn,'d')
+    def setUp(self, tdir="."):
+        """
+        @param tdir := directory to use for this test
         
-        self.mnotify.events=['all','create','attrib','delete']
+        """
+        self.tdir = tdir
+        self.fsevents = []      ## containter for observed events
+        self.mnotify = Dir_Watcher(self.tdir)   ## build the dir_watch to test
+        self.mnotify.callbacks['all'] = self.cbfn  ## cbfn appends to self.events
+        self.mnotify.callbacks['create'] = partial(self.cbfn,'c') ## slightly different signtarure
+        self.mnotify.callbacks['attrib'] = partial(self.cbfn,'a') ## from all call back
+        self.mnotify.callbacks['delete'] = partial(self.cbfn,'d')
+        self.mnotify.callbacks['modify'] = partial(self.cbfn,'m')
+        self.mnotify.events=['all','create','attrib','delete','modify']
+        
+        ## fire up the file system tester
         self.tfile = fileSystemTester(self.tdir,self.NUMFILES)
     
     def tearDown(self):
+        ## need to clean up the connections
         self.mnotify.watcher.loseConnection()
         self.tfile= None
         unittest.TestCase.tearDown(self)
     
     def cbfn(self, event, fpath):
+        ## a template callback that appends to the fsevents list
         self.fsevents.append((event,fpath))
         
-        
     def verify_events(self,ver_events):
+        ## assert that we saw the requested events on each of the test files
         observed = [(f[1].basename().strip('.testtouch'),f[0]) for f in self.fsevents]
         md = {}
         for mevent in observed:
@@ -79,10 +95,13 @@ class DirWatchTest(unittest.TestCase):
                 self.assertTrue(all([e in ver_events for e in md.get(file_int)]))
         
     @inlineCallbacks    
-    def test_file_create_remove(self):
-        self.tfile.cmds=['run_touch','run_rm']
+    def test_file_create(self):
+        self.tfile.cmds=['run_touch', 'run_rm']
         smt = yield self.tfile.do_cmds()
-        #~ import pdb; pdb.set_trace()
-        self.verify_events(['create','attrib','c','a'])
+        self.verify_events(['create','attrib','c','a'])        
         #~ self.verify_events(['delete','d'])
-        
+        ## it looks like the trial test wrapper is keeping it from detecting
+        ## the delete event - if you monitor the tdir with another instance
+        ## of this script, it detects just fine
+
+

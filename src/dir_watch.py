@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+# jmcgrady@twitter.com
+#
+# dir_watch.py
+# REFS: JIRA HWENG-
+# REPO: http://cgit.twitter.biz/tw_file_depot
 
 from twisted.internet import inotify
 from twisted.python import filepath
-
-import tw_simple_proc as tsp
-
 import re
 
 class Dir_Watcher(object):
@@ -22,7 +24,6 @@ class Dir_Watcher(object):
         self.watcher = inotify.INotify()
         self.watcher.watch(filepath.FilePath(dirpath), callbacks=[self.notify])
         self.watcher.startReading()
-        #~ self.callback_fns['all'] = False
         self.name_regex = re.compile(name_match) if name_match else None
         self.events = events
         self.callbacks = {
@@ -31,7 +32,7 @@ class Dir_Watcher(object):
             'modify': modify_handler,
             'attrib': attrib_handler,
             'all': all_callback}
-            
+
     def notify(self, ignored, filepath, mask):
        """
        For historical reasons, an opaque handle is passed as first
@@ -43,12 +44,13 @@ class Dir_Watcher(object):
        if self.name_regex and not self.name_regex.match(filepath.basename):
            return None
        str_event = inotify.humanReadableMask(mask)[0]
-       #~ print str_event, filepath
        if str_event in self.events:
            self.callbacks.get(str_event)(filepath)
        if 'all' in self.events:
            self.callbacks['all'](str_event, filepath)
 
+## these default bindings raise exceptions if any of the default inotify
+## events are turned on without having a callback defined
 def create_handler(file_path):
     raise NotImplemented('create called and not defined')
 def delete_handler(file_path):
@@ -60,34 +62,3 @@ def attrib_handler(file_path):
 def all_callback(event_name, file_path):
     raise NotImplemented('all called and not defined')
 
-
-
-#### exapmle functions below here
-def my_examples():
-    from twisted.internet import reactor
-    import functools
-    import sys
-    from pprint import pprint
-
-    def print_event(str_event, filepath):
-        '''uses a dummy script to emulate sending to another process'''
-        strme = "{0} - {1}".format(str_event, filepath.path)
-        md = tsp.make_def(reactor, 0, sys.executable,'./cmdline.py', strme)
-        md.addCallback(pprint)
-
-    ## create a watcher for a directory
-    my_notify = Dir_Watcher("/tmp/filewatch")
-
-    ## register one or more callback functions - can be put on queues from here as well
-    my_notify.callbacks['create'] = functools.partial(print_event,'c')
-    my_notify.callbacks['modify'] = functools.partial(print_event,'m')
-    my_notify.callbacks['delete'] = functools.partial(print_event,'d')
-    my_notify.callbacks['attrib'] = functools.partial(print_event,'a')
-
-    ## turn on the listeners for the scripted events
-    my_notify.events = ['create','modify','delete','attrib']
-
-    reactor.run()
-    
-if __name__ == '__main__':
-    my_examples()

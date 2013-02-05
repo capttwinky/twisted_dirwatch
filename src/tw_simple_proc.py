@@ -60,17 +60,3 @@ def mail_def(to_addrs, message, subject):
     msg['From'] = from_addr
     msg['To'] = ', '.join(to_addrs)
     return sendmail('localhost', from_addr, to_addrs, msg.as_string())
-
-def __main__():
-    from twisted.internet import reactor as mreact
-    from pprint import pprint
-    
-    mrs = [make_def(mreact, 0, '/usr/bin/python','./cmdline.py', '30')]
-    for mr in mrs:
-        mr.addCallback(pprint)
-    mreact.run()
-    #~ dl = yield DeferredList(mr)
-    import pdb; pdb.set_trace()
-
-if __name__ == '__main__':
-    __main__()
