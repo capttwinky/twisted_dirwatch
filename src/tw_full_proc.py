@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# jmcgrady@twitter.com
-#
-# tw_full_proc.py
-# REFS: JIRA HWENG-
-# REPO: http://cgit.twitter.biz/...
 
 #!/usr/bin/env python
 
