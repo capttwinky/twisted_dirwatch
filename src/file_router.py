@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# jmcgrady@twitter.com
-#
-# file_router.py
-# REFS: JIRA HWENG-
-# REPO: http://cgit.twitter.biz/tw_file_depot
-
 # cli program 
 # reads a file's contents, send them to a url,  do errback & callback
 
