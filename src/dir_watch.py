@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# jmcgrady@twitter.com
-#
-# dir_watch.py
-# REFS: JIRA HWENG-
-# REPO: http://cgit.twitter.biz/tw_file_depot
 
 from twisted.internet import inotify
 from twisted.python import filepath
